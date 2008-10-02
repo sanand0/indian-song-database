@@ -13,6 +13,16 @@ INDEX_DAYS = 3
 MOVIE_DAYS = 400
 __now__   = datetime.datetime.now()
 
+def if_new(entity, age, function, item):
+    if (__now__ - entity.date).days >= age:
+        try:
+            html = entity.read()
+            function(entity, html, item)
+            entity.date = __now__
+            return html
+        except Exception:
+            traceback.print_exc(0)
+
 # ================================================================================================================================
 class Raaga:
     lang = {
@@ -30,12 +40,7 @@ class Raaga:
     def __init__(self, lang):
         for item in self.lang.get(lang, ()):
             index = film.entity('www.raaga.com', 'index', lang, item[0], item[0], 'channels/' + item[0] + '/' + item[1] + '.asp')
-            if (__now__ - index.date).days >= INDEX_DAYS:
-                try:
-                    self.do_index(index, index.read(), item)
-                    index.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(index, INDEX_DAYS, self.do_index, item)
 
     def strip_name(self, name):
         name = re.sub('\(\d+?\)', '', name)         # Ignore numbers in brackets
@@ -44,14 +49,9 @@ class Raaga:
     def do_index(self, index, html, item):
         for match in re.findall('href="http://www.raaga.com/(channels/' + index.lang + '/moviedetail.asp\?mid=)(\w*)[^>]*>([^<]*)</a>', html, re.UNICODE):
             movie = film.entity(index.db, 'movie', index.lang, match[1], self.strip_name(match[2]), match[0] + match[1])
-            if (__now__ - movie.date).days >= MOVIE_DAYS:
-                try:
-                    self.do_movie(movie, movie.read())
-                    movie.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(movie, MOVIE_DAYS, self.do_movie, item)
 
-    def do_movie(self, movie, html):
+    def do_movie(self, movie, html, item):
         year = re.findall(movie.name + '\s+\((\d+)\)', html, re.UNICODE)
         if year: film.relate(movie, 'year', film.entity('', 'year', '', year[0], year[0], ''))
 
@@ -129,29 +129,19 @@ class MusicIndiaOnline:
             for letter in 'ABCDEFGHIJKLMNOPQRSTUVWXYZ':
                 name = item[0] + ":" + letter
                 index = film.entity('www.musicindiaonline.com', 'index', lang, name, name, 'music/' + item[0] + '/i/' + letter + '/')
-                if (__now__ - index.date).days >= INDEX_DAYS:
-                    try:
-                        self.do_index(index, index.read(), item)
-                        index.date = __now__
-                    except Exception:
-                        traceback.print_exc(0)
+                if_new(index, INDEX_DAYS, self.do_index, item)
 
     def strip_name(self, name):
         name = re.sub('<[^>]*>', '', name)          # Ignore tags
         name = re.sub('\(\d+?\)', '', name)         # Ignore numbers in brackets
         name = re.sub('(19|20)\d\d', '', name)      # Ignore year, even outside of brackets... TODO: What about 1947:Earth and 1942:A Love Story?
-        name = re.sub('\s*\-?\s*$', '', name)       # Ignore anything after the hyphen
+        name = re.sub('\s*\-\s*$', '', name)        # Ignore anything after the trailing hyphen
         return name
 
     def do_index(self, index, html, item):
         for match in re.findall('/(music/' + item[0] + '/s/' + item[1] + '.(\d+)/).>(.*?)</a>', html, re.UNICODE):
             movie = film.entity(index.db, 'movie', index.lang, match[1], self.strip_name(match[2]), match[0])
-            if (__now__ - movie.date).days >= MOVIE_DAYS:
-                try:
-                    self.do_movie(movie, movie.read(), item)
-                    movie.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(movie, MOVIE_DAYS, self.do_movie, item)
 
     def do_movie(self, movie, html, item):
         for match in re.findall('href=./(music/' + movie.lang + '/m/(\w+).(\d+)/).>(.*?)</a>', html, re.UNICODE):
@@ -202,12 +192,7 @@ class Smashits:
     def __init__(self, lang):
         for item in self.lang.get(lang, ()):
             index = film.entity('ww.smashits.com', 'index', lang, item[0], item[0], 'index.cfm?Page=Audio&SubPage=ShowSubCats&AudioCatID=' + item[1])
-            if (__now__ - index.date).days >= INDEX_DAYS:
-                try:
-                    self.do_index(index, index.read(), item)
-                    index.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(index, INDEX_DAYS, self.do_index, item)
 
     def do_index(self, index, html, item):
         # TODO: Why not just index the collections as well? Why restrict it to movies?
@@ -215,14 +200,9 @@ class Smashits:
         html = html[2] or html[0]
         for match in re.findall('href="/(music/' + item[0] + '/songs/(\d+).*?)">(.*?)</a>', html, re.UNICODE):
             movie = film.entity(index.db, 'movie', index.lang, match[1], match[2], match[0])
-            if (__now__ - movie.date).days >= MOVIE_DAYS:
-                try:
-                    self.do_movie(movie, movie.read())
-                    movie.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(movie, MOVIE_DAYS, self.do_movie, item)
 
-    def do_movie(self, movie, html):
+    def do_movie(self, movie, html, item):
         for match in re.findall('<td class="albumInfo"[^>]*><.*?>(.*?)\s*:\s*<.*?></td>\s*<td class="albumInfo"[^>]*>(.*?)</td>', html, re.S + re.UNICODE):
             rel = self.attr[match[0]]
             names = re.sub('<[^>]*>', '', match[1])     # Remove tags
@@ -246,12 +226,7 @@ class Oosai:
         for item in self.lang.get(lang, ()):
             for letter in ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','misc'):
                 index = film.entity('www.oosai.com', 'index', lang, letter, letter, lang + 'movies/movielistby_' + letter + '.cfm')
-                if (__now__ - index.date).days >= INDEX_DAYS:
-                    try:
-                        self.do_index(index, index.read(), item)
-                        index.date = __now__
-                    except Exception:
-                        traceback.print_exc(0)
+                if_new(index, INDEX_DAYS, self.do_index, item)
 
     def strip_name(self, name):
         name = re.sub('<img.*?alt=["\']?(.*?)(["\']|\w+=).*?>', r'\1', name)
@@ -260,14 +235,9 @@ class Oosai:
     def do_index(self, index, html, item):
         for match in re.findall('href="(' + index.lang + 'songs/(.*?)\.cfm)".*?>(.*?)</a>', html, re.S + re.UNICODE):
             movie = film.entity(index.db, 'movie', index.lang, match[1], self.strip_name(match[2]), match[0])
-            if (__now__ - movie.date).days >= MOVIE_DAYS:
-                try:
-                    self.do_movie(movie, movie.read())
-                    movie.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(movie, MOVIE_DAYS, self.do_movie, item)
 
-    def do_movie(self, movie, html):
+    def do_movie(self, movie, html, item):
         for match in re.findall('Music Director\s*: <[^>]*>(.*?)<', html, re.S + re.UNICODE):
             for name in re.split('\s*,\s*', match):
                 film.relate(movie, 'composer', film.entity(movie.db, 'person', '', name, name, ''))
@@ -323,26 +293,17 @@ class Dishant:
     def __init__(self, lang):
         for item in self.lang.get(lang, ()):
             index = film.entity('www.dishant.com', 'index', lang, item[0], item[0], item[0] + '-albums-index.html')
-            if (__now__ - index.date).days >= INDEX_DAYS:
-                try:
-                    self.do_index(index, index.read(), item)
-                    index.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(index, INDEX_DAYS, self.do_index, item)
 
     def strip_name(self, name):
         name = re.sub('\(\d+?\)', '', name)         # Ignore numbers in brackets
         return name
 
+    # TODO: The movie 'Mr. 100% - The Real Player' causes problems
     def do_index(self, index, html, item):
         for match in re.findall('/(album/([^"]+)\.html)">(.*?)</a>', html, re.UNICODE):
             movie = film.entity(index.db, 'movie', index.lang, match[1], self.strip_name(match[2]), match[0])
-            if (__now__ - movie.date).days >= MOVIE_DAYS:
-                try:
-                    self.do_movie(movie, movie.read(), item)
-                    movie.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(movie, MOVIE_DAYS, self.do_movie, item)
 
     def do_movie(self, movie, html, item):
         for item in self.attr:
@@ -353,6 +314,100 @@ class Dishant:
             song = film.entity(movie.db, 'song', movie.lang, match[2], match[0], match[1])
             film.relate(movie, 'song', song)
 
+# ================================================================================================================================
+class Dhingana:
+    lang = {
+        'hindi'     : ( ('latest'   , ),
+                        ('oldies'   , ),
+                        ('pop'      , ),
+                        ('special'  , ),
+                        ('ghazals'  , ),
+                        ('bhajans'  , ), ),
+        'tamil'     : ( ('album'    , ), ),
+        'punjabi'   : ( ('punjabi'  , ),
+                        ('bhangra'  , ), ),
+        'marathi'   : ( ('album'    , ), ),
+    }
+
+    attr = (
+        ('CAST',    'person',   'actor'     ),
+        ('MUSIC',   'person',   'composer'  ),
+        ('YEAR',    'year',     'year'      ),
+    )
+
+    def __init__(self, lang):
+        for item in self.lang.get(lang, ()):
+            html = self.get_index(lang, item, '1')
+            for count in re.findall('/home/' + lang + '/' + item[0] + '/a_a/at/page/(\d+)', html, re.UNICODE):
+                self.get_index(lang, item, count[0])
+
+    def get_index(self, lang, item, count):
+        index = film.entity('www.dhingana.com', 'index', lang, item[0] + count, item[0] + count, 'home/' + lang + '/' + item[0] + '/a_a/at/page/' + count)
+        return if_new(index, INDEX_DAYS, self.do_index, item)
+
+    def strip_name(self, name):
+        return name
+
+    def do_index(self, index, html, item):
+        for match in re.findall('/([^\/]*/movie/songs/' + index.lang + '/' + item[0] + '/(\d+))">(.*?)</a>', html, re.UNICODE):
+            movie = film.entity(index.db, 'movie', index.lang, match[1], self.strip_name(match[2]), match[0])
+            if_new(index, INDEX_DAYS, self.do_index, item)
+
+    def do_movie(self, movie, html, item):
+        for item in self.attr:
+            for match in re.findall('<H3>' + item[0] + '</H3>\s*<p>(.*?)</p>', html, re.S + re.IGNORECASE + re.UNICODE):
+                for thing in match[0].split(','):
+                    print thing, item[1], item[2]
+                    # film.relate(movie, item[1], film.entity(movie.db, item[2], movie.lang, match[1], match[2], match[0]))
+
+        # TODO: Get the songs
+
+
+# ================================================================================================================================
+# http://www.mp3hungama.com/music/genre_albums.php?id=3
+
+class MP3Hungama:
+    lang = {
+        'hindi':        ( ('indian-movies'    , '3', ),
+                          ('oldies'           , '2', ),
+                          ('remix'            , '5', ), ),
+    }
+
+    attr = {
+        'Cast'          : ( 'actor'     , 'person' ),
+        'Music Director': ( 'composer'  , 'person' ),
+        'Director'      : ( 'director'  , 'person' ),
+        'Producer'      : ( 'producer'  , 'person' ),
+        'Lyrics'        : ( 'lyricist'  , 'person' ),
+        'Year'          : ( 'year'      , 'year'   ),
+    }
+
+    def __init__(self, lang):
+        for item in self.lang.get(lang, ()):
+            index = film.entity('www.mp3hungama.com', 'index', lang, item[1], item[1], 'music/genre_albums.php?id=' + item[1])
+            if_new(index, INDEX_DAYS, self.do_index, item)
+
+    def strip_name(self, name):
+        name = re.sub('<[^>]*>', '', name)          # Ignore tags
+        name = re.sub('\([^\)]+\)', '', name)       # Ignore anything in brackets (TODO: risky)
+        name = re.sub('\s*\-\s*$', '', name)        # Ignore anything after the trailing hyphen
+        return name
+
+    def do_index(self, index, html, item):
+        for match in re.findall('href="(index.php\?action=album&id=(\d+))">(.*?)</a>', html, re.IGNORECASE + re.S + re.UNICODE):
+            movie = film.entity(index.db, 'movie', index.lang, match[1], self.strip_name(match[2]), 'music/' + match[0])
+            if_new(index, INDEX_DAYS, self.do_index, item)
+
+    def do_movie(self, movie, html, item):
+        for info in re.findall('<b>Album Info:</b>(.*?)<BR>', html, re.IGNORECASE + re.S + re.UNICODE):
+            for match in re.findall('^(.*?):(.*?)$', info[0], re.IGNORECASE + re.S + re.UNICODE + re.MULTILINE):
+                rel = self.attr[match[0]]
+                # for name in match[1].split(', '):
+                #     film.relate(movie, rel[0], film.entity(movie.db, rel[1], movie.lang, match[1], match[1], url))
+
+        for match in re.findall('playSong\((\d+)\)(.*?)</b>', html, re.IGNORECASE + re.S + re.UNICODE):
+            song = film.entity(movie.db, 'song', movie.lang, match[0], self.strip_name(match[1]), 'music/index.php?action=song&id=' + match[0])
+            # film.relate(movie, 'song', song)
 
 # ================================================================================================================================
 class Cooltoad:
@@ -370,26 +425,16 @@ class Cooltoad:
     def __init__(self, lang):
         for item in self.lang.get(lang, ()):
             index = film.entity('music.cooltoad.com', 'index', lang, item[0], item[0], 'music/category.php?id=' + item[1])
-            if (__now__ - index.date).days >= INDEX_DAYS:
-                try:
-                    self.do_index(index, index.read(), item)
-                    index.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(index, INDEX_DAYS, self.do_index, item)
 
     def do_index(self, index, html, item):
         for match in re.findall('<A HREF="\?id=(\d+)[^<]*</A>\s*<SMALL>\((\d+)\)</SMALL>', html, re.IGNORECASE + re.S + re.UNICODE):
             for page in range(1, (int(match[1])+39)/40):
                 key = match[0] + "-" + str(page)
                 subindex = film.entity(index.db, 'index', index.lang, key, key, 'music/category.php?id=' + match[0] + '&page=' + str(page) + '&order=title')
-                if (__now__ - subindex.date).days >= INDEX_DAYS:
-                    try:
-                        self.do_subindex(subindex, subindex.read())
-                        subindex.date = __now__
-                    except Exception:
-                        traceback.print_exc(0)
+                if_new(subindex, INDEX_DAYS, self.do_subindex, item)
 
-    def do_subindex(self, subindex, html):
+    def do_subindex(self, subindex, html, item):
         for match in re.findall('song\.php\?id=(\d+).*?>(.*?)</A>', html, re.S + re.UNICODE):
             song = film.entity(subindex.db, 'song', subindex.lang, match[0], match[1], 'music/song.php?id=' + match[0])
 
@@ -417,22 +462,12 @@ class MusicPlugin:
             htmlload.url('http://www.musicplug.in/get_language.php?langid=' + item + '&movietypeid=1')
             for letter in ('a','b','c','d','e','f','g','h','i','j','k','l','m','n','o','p','q','r','s','t','u','v','w','x','y','z','0-9'):
                 index = film.entity('www.musicplug.in', 'index', lang, letter, letter, 'movie_list.php?letter=' + letter)
-                if (__now__ - index.date).days >= INDEX_DAYS:
-                    try:
-                        self.do_index(index, index.read(), item)
-                        index.date = __now__
-                    except Exception:
-                        traceback.print_exc(0)
+                if_new(index, INDEX_DAYS, self.do_index, item)
 
     def do_index(self, index, html, item):
         for match in re.findall("href='(songs.php\?movieid=(\d+))'[^>]*?>([^<]*?)</a>", html, re.S + re.UNICODE):
             movie = film.entity(index.db, 'movie', index.lang, match[1], match[2], match[0])
-            if (__now__ - movie.date).days >= MOVIE_DAYS:
-                try:
-                    self.do_movie(movie, movie.read())
-                    movie.date = __now__
-                except Exception:
-                    traceback.print_exc(0)
+            if_new(movie, MOVIE_DAYS, self.do_movie, item)
 
     def strip_name(self, name):
         name = re.sub(r'\s*\-\s*:.*$', '', name) # TODO: Remove stuff like 'Ponnumani -  :  anbaigreat song' or 'Pasumpon - Thamarai :  wht a superp song'

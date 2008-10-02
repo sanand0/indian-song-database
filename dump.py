@@ -52,7 +52,7 @@ def makeMP3search(filename, lang):
             # Get the first movie for the song. Unfortunately, MusicIndiaOnline has MULTIPLE movies (misspelt) accessing the same song
             db      = item[1]
             num     = str(sng.num)
-            movie   = 'mp3'
+            movie   = ''
             song    = sng.name.replace('^', '').replace('~', '')
             trans   = sng.tran
             year    = ''
@@ -81,4 +81,3 @@ for lang in film.__langs__:
 # dump("Identity.txt", film.Identity)
 
 # Create a load(SQLObject) that loads from a dumped file and APPENDS to the table
-

@@ -26,7 +26,7 @@ def create():
 __langs__ = ('hindi', 'tamil', 'telugu', 'kannada', 'malayalam', 'carnatic', 'hindustani', 'punjabi', 'bengali', 'gujarati', 'marathi')
 
 class Entity(SQLObject):
-    db   = EnumCol      ( enumValues=('', 'www.musicindiaonline.com', 'www.raaga.com', 'www.oosai.com', 'ww.smashits.com', 'www.musicplug.in', 'music.cooltoad.com', 'www.dishant.com', 'www.youtube.com') )
+    db   = EnumCol      ( enumValues=('', 'www.musicindiaonline.com', 'www.raaga.com', 'www.oosai.com', 'ww.smashits.com', 'www.musicplug.in', 'music.cooltoad.com', 'www.dishant.com', 'www.youtube.com', 'www.dhingana.com', 'www.mp3hungama.com', 'bollyfm.net') )
     type = EnumCol      ( enumValues=('index', 'movie', 'song', 'year', 'person', 'rating', 'duration', 'tag') )
     lang = EnumCol      ( enumValues=('',) + __langs__, default='' )
     num  = UnicodeCol   ( notNone=True,  length=250 )
@@ -40,7 +40,7 @@ class Entity(SQLObject):
     # entityIndex = DatabaseIndex('type', 'lang', 'name')
 
     def read(self):
-        print "Getting", self.lang, self.db, self.type, self.name
+        print "Getting", self.lang, self.db, self.type, self.name, self.url
         return htmlload.decode_entities(htmlload.url('http://' + self.db + '/' + self.url))
 
 class Relation(SQLObject):
