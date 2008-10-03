@@ -2,6 +2,7 @@ from sqlobject import *
 import re, sys, film, trans
 
 def dump(filename, table):
+    print filename
     file = open(filename, 'w')
     cols = list(col.dbName for col in table.sqlmeta.columnList)
     file.write("\t".join(cols) + "\n")
@@ -17,6 +18,9 @@ def makesearch(filename, lang):
         ('www.musicindiaonline.com' , 'M', ),
         ('www.raaga.com'            , 'R', ),
         ('www.oosai.com'            , 'O', ),
+#        ('www.dhingana.com'         , 'G', ),
+#        ('www.mp3hungama.com'       , '3', ),
+#        ('www.bollyfm.net'          , 'B', ),
 #        ('www.dishant.com'          , 'D', ),
 #        ('www.musicplug.in'         , 'P', ),
 #        ('music.cooltoad.com'       , 'C', ),
@@ -69,15 +73,23 @@ def translate():
             item.tran = ''
 
 film.connect()
-for lang in film.__langs__:
-# for lang in sys.argv[1:]:
-    print lang
-    makesearch(lang + ".search.txt", lang)
-#    makeMP3search(lang + "mp3.search.txt", lang)
+
+def process(langs, what):
+    for lang in langs:
+        print lang
+        if what.find('plain'):  makesearch(lang + ".search.txt", lang)
+        if what.find('mp3'):    makeMP3search(lang + "mp3.search.txt", lang)
+
+def dumpAll():
+    dump("Entity.txt", film.Entity)
+    dump("Relation.txt", film.Relation)
+    dump("Identity.txt", film.Identity)
 
 # translate()
-# dump("Entity.txt", film.Entity)
-# dump("Relation.txt", film.Relation)
-# dump("Identity.txt", film.Identity)
+# dumpAll()
+# process(sys.argv[1:], 'plain+mp3')
+# process(film.__langs__, 'plain+mp3')
+
+dumpAll()
 
 # Create a load(SQLObject) that loads from a dumped file and APPENDS to the table

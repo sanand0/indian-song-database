@@ -46,7 +46,7 @@ class Entity(SQLObject):
 class Relation(SQLObject):
     src  = ForeignKey   ( 'Entity' )
     tgt  = ForeignKey   ( 'Entity' )
-    rel  = EnumCol      ( enumValues=('movie', 'song', 'composer', 'singer', 'lyricist', 'actor', 'director', 'producer', 'year', 'rating', 'duration', 'tag', 'instrument', 'raaga', 'beat', 'religion', 'deity', 'language') )
+    rel  = EnumCol      ( enumValues=('movie', 'song', 'composer', 'singer', 'lyricist', 'actor', 'director', 'producer', 'year', 'rating', 'duration', 'tag', 'instrument', 'raaga', 'beat', 'religion', 'deity', 'language', 'lyrics') )
     # rel  = StringCol    ( length=16 )
 
 class Identity(SQLObject):

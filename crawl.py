@@ -9,8 +9,8 @@ import film, datetime, re, time, traceback, sys
 film.connect()
 film.create()
 
-INDEX_DAYS = 3
-MOVIE_DAYS = 400
+INDEX_DAYS = 0  # Default: 3
+MOVIE_DAYS = 0  # Default: 400
 __now__   = datetime.datetime.now()
 
 def if_new(entity, age, function, item):
@@ -148,13 +148,19 @@ class MusicIndiaOnline:
             rel = self.attr[match[1]]
             film.relate(movie, rel[0], film.entity(movie.db, rel[1], movie.lang, match[2], match[3], match[0]))
 
+        # Match song
         for match in re.findall('<tr.*?href=./p/x/([^/]*)/[^>]*>(.*?)</a>(.*?)</tr>', html, re.S + re.UNICODE):
             song = film.entity(movie.db, 'song', movie.lang, match[0], match[1], 'p/x/' + match[0])
             film.relate(movie, 'song', song)
 
-            for submatch in re.findall("onclick=.sltb_filt\('(.*?)',(\d+)\)[^>]+>(.*?)</a>", match[2], re.S):
+            # Get song attributes
+            for submatch in re.findall("onclick=.sltb_filt\('(.*?)',(\d+)\)[^>]+>(.*?)</a>", match[2], re.S + re.UNICODE):
                 rel = self.attr[submatch[0]]
                 film.relate(song, rel[0], film.entity(movie.db, rel[1], movie.lang, submatch[1], submatch[2], 'music/' + movie.lang + '/m/' + rel[0] + '.' + submatch[1]))
+
+            # Get lyrics
+            for submatch in re.findall('/(lr/(\d+/\d+)/)', match[2], re.S + re.UNICODE):
+                film.relate(song, 'lyrics', film.entity(movie.db, 'tag', movie.lang, submatch[1], 'lyrics', submatch[0]))
 
 # ================================================================================================================================
 # TODO: Add Smashitsusa.com
@@ -488,7 +494,6 @@ class MusicPlugin:
 """
 
 for lang in film.__langs__:
-# for lang in sys.argv:
     MusicIndiaOnline(lang)
     Raaga(lang)
     Smashits(lang)
@@ -496,4 +501,5 @@ for lang in film.__langs__:
     Dishant(lang)
 
 for lang in film.__langs__:
+    MP3Hungama(lang)
     Cooltoad(lang)
