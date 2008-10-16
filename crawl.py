@@ -9,8 +9,8 @@ import film, datetime, re, time, traceback, sys
 film.connect()
 film.create()
 
-INDEX_DAYS = 0  # Default: 3
-MOVIE_DAYS = 0  # Default: 400
+INDEX_DAYS = 3    # Default: 3
+MOVIE_DAYS = 400  # Default: 400
 __now__   = datetime.datetime.now()
 
 def if_new(entity, age, function, item):
@@ -501,5 +501,5 @@ for lang in film.__langs__:
     Dishant(lang)
 
 for lang in film.__langs__:
-    MP3Hungama(lang)
     Cooltoad(lang)
+#    MP3Hungama(lang)
