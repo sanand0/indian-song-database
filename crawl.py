@@ -24,6 +24,10 @@ def if_new(entity, age, function, item):
             traceback.print_exc(0)
 
 # ================================================================================================================================
+class SongsPk:
+    pass
+
+# ================================================================================================================================
 class Raaga:
     lang = {
         'hindi'      : ( ('hindi'     , 'movies'), ),
@@ -246,11 +250,11 @@ class Oosai:
     def do_movie(self, movie, html, item):
         for match in re.findall('Music Director\s*: <[^>]*>(.*?)<', html, re.S + re.UNICODE):
             for name in re.split('\s*,\s*', match):
-                film.relate(movie, 'composer', film.entity(movie.db, 'person', '', name, name, ''))
+                film.relate(movie, 'composer', film.entity(movie.db, 'person', movie.lang, name, name, ''))
 
         for match in re.findall('Stars\s*: <[^>]*>(.*?)<', html, re.S + re.UNICODE):
             for name in re.split('\s*[,&\r\n]+\s*', match):
-                film.relate(movie, 'actor', film.entity(movie.db, 'person', '', name, name, ''))
+                film.relate(movie, 'actor', film.entity(movie.db, 'person', movie.lang, name, name, ''))
 
 #        for match in re.findall('onclick="setUsrlist.(\d*)[^>]>([^<]*)</a>.*class="ph1">([^<]*)<', html, re.S + re.UNICODE):
         for match in re.findall('onclick="setUsrlist.(\d*)[^>]*>([^<]*)</a>.*?class="ph1">([^<]*)<', html, re.S + re.UNICODE):
@@ -258,7 +262,7 @@ class Oosai:
             film.relate(movie, 'song', song)
 
             for name in re.split('\s*[,&\r\n]+\s*', match[2]):
-                film.relate(song, 'singer', film.entity(movie.db, 'person', '', name, name, ''))
+                film.relate(song, 'singer', film.entity(movie.db, 'person', movie.lang, name, name, ''))
 
 # ================================================================================================================================
 class Dishant:
